@@ -1,10 +1,13 @@
 {
-  "name": "launchpad-osc",
+  "name": "@fand/launchpad-mini-osc",
+  "description": "launchpad-mini-osc - Send OSC from your launchpad!",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": "node cli.js",
   "license": "MIT",
   "dependencies": {
     "launchpad-mini": "^2.1.2",
+    "meow": "^5.0.0",
     "node-osc": "^2.1.0"
   }
 }

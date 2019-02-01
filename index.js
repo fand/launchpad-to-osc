@@ -4,7 +4,7 @@ const Launchpad = require('launchpad-mini');
 class Pad {
   constructor(port) {
     this.pad = new Launchpad();
-    this.osc = new OSC.Client('127.0.0.1', 3333);
+    this.osc = new OSC.Client('127.0.0.1', port);
 
     this.cc = [0, 0, 0, 0, 0, 0, 0, 0];
     this.note = [
@@ -157,11 +157,4 @@ class Pad {
   }
 }
 
-const p = new Pad(3333);
-p.start();
-
-//do something when app is closing
-process.on('exit', () => {
-  p.close();
-  process.exit();
-});
+module.exports = Pad;
