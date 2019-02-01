@@ -36,7 +36,6 @@ class Pad {
 
   onKey(k) {
     console.log(k);
-    const x = k.x;
 
     if (k.x === 7 && k.y === 8) {
       if (k.pressed) {
@@ -48,39 +47,77 @@ class Pad {
       this.pad.col(k.pressed ? this.pad.red : this.isMixer ? this.pad.green : this.pad.off, k);
     }
 
+    if (this.isMixer) {
+      this.onKeyMixer(k);
+    }
+    else {
+      this.onKeyPad(k);
+    }
+  }
+
+  onKeyMixer(k) {
     if (k.y === 8) {
       const offButtons = [];
       for (let i = 0; i < 8; i++) {
-        offButtons.push([x, i]);
+        offButtons.push([k.x, i]);
       }
       this.pad.col(this.pad.off, offButtons);
 
-      this.cc[x] = 0;
+      this.cc[k.x] = 0;
     }
     if (k.x < 8 && k.y < 8) {
       const y = (8 - k.y);
 
       const onButtons = [];
       for (let i = k.y; i < 8; i++) {
-        onButtons.push([x, i]);
+        onButtons.push([k.x, i]);
       }
       this.pad.col(k.pressed ? this.pad.red : this.pad.green, onButtons);
 
       const offButtons = [];
       for (let i = 0; i < k.y; i++) {
-        offButtons.push([x, i]);
+        offButtons.push([k.x, i]);
       }
       this.pad.col(this.pad.off, offButtons);
 
-      this.cc[x] = y / 8.0;
+      this.cc[k.x] = y / 8.0;
     }
 
-    this.sendMixer();
-  }
-
-  sendMixer() {
     // console.log(this.cc);
     this.osc.send('/cc', this.cc);
+  }
+
+  onKeyPad(k) {
+    if (k.x === 8) {
+      this.isHold = k.pressed;
+    }
+    if (k.x === 8 || k.y === 8) { return; }
+
+    const i = k.y * 8 + k.x;
+
+    const note = this.note[i];
+    let newNote = note;
+
+    if (this.isHold) {
+      if (k.pressed) {
+        newNote = note ? 0 : 0.5;
+      }
+    }
+    else {
+      if (note !== 0.5) {
+        newNote = k.pressed ? 1 : 0;
+      }
+    }
+
+    this.note[i] = newNote;
+
+    const color = k.pressed ? this.pad.red :
+      (newNote == 1) ? this.pad.yellow :
+      (newNote == 0.5) ? this.pad.green : this.pad.off;
+
+    this.pad.col(color, k);
+
+    this.osc.send('/note', this.note);
   }
 
   showMixer() {
@@ -92,23 +129,31 @@ class Pad {
         onButtons.push([x, 7 - y]);
       }
     });
+
     this.pad.reset(0);
     this.pad.col(this.pad.green, onButtons);
   }
 
   showPad() {
     const onButtons = [];
+    const holdButtons = [];
     this.pad.reset(0);
 
     this.note.forEach((n, i) => {
       if (n == 0) { return; }
       const x = i % 8;
       const y = Math.floor(i / 8);
-      onButtons.push([i, y]);
+
+      if (n == 1) {
+        holdButtons.push([x, y]);
+      } else {
+        onButtons.push([x, y]);
+      }
     });
 
     this.pad.reset(0);
     this.pad.col(this.pad.green, onButtons);
+    this.pad.col(this.pad.yellow, holdButtons);
   }
 }
 
