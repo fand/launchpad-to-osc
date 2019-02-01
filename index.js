@@ -35,8 +35,18 @@ class Pad {
   }
 
   onKey(k) {
-    // console.log(k);
+    console.log(k);
     const x = k.x;
+
+    if (k.x === 7 && k.y === 8) {
+      if (k.pressed) {
+        this.isMixer = !this.isMixer;
+        if (this.isMixer) { this.showMixer(); }
+        else { this.showPad(); }
+      }
+
+      this.pad.col(k.pressed ? this.pad.red : this.isMixer ? this.pad.green : this.pad.off, k);
+    }
 
     if (k.y === 8) {
       const offButtons = [];
@@ -65,8 +75,40 @@ class Pad {
       this.cc[x] = y / 8.0;
     }
 
-    console.log(this.cc);
+    this.sendMixer();
+  }
+
+  sendMixer() {
+    // console.log(this.cc);
     this.osc.send('/cc', this.cc);
+  }
+
+  showMixer() {
+    const onButtons = [];
+
+    this.cc.forEach((c, x) => {
+      const height = c * 8.;
+      for (let y = 0; y < height; y++) {
+        onButtons.push([x, 7 - y]);
+      }
+    });
+    this.pad.reset(0);
+    this.pad.col(this.pad.green, onButtons);
+  }
+
+  showPad() {
+    const onButtons = [];
+    this.pad.reset(0);
+
+    this.note.forEach((n, i) => {
+      if (n == 0) { return; }
+      const x = i % 8;
+      const y = Math.floor(i / 8);
+      onButtons.push([i, y]);
+    });
+
+    this.pad.reset(0);
+    this.pad.col(this.pad.green, onButtons);
   }
 }
 
