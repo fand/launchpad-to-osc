@@ -1,14 +1,40 @@
 const OSC = require('node-osc');
-const osc = new OSC.Client('127.0.0.1', 3333);
-
 const Launchpad = require('launchpad-mini');
-const pad = new Launchpad();
 
-const cc = [0, 0, 0, 0, 0, 0, 0, 0];
+class Pad {
+  constructor(port) {
+    this.pad = new Launchpad();
+    this.osc = new OSC.Client('127.0.0.1', 3333);
 
-pad.connect().then(() => {
-  pad.reset(0);
-  pad.on('key', k => {
+    this.cc = [0, 0, 0, 0, 0, 0, 0, 0];
+    this.note = [
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+
+    this.isMixer = false;
+    this.isHold = false;
+  }
+
+  start() {
+    this.pad.connect().then(() => {
+      this.pad.reset(0);
+      this.pad.on('key', k => this.onKey(k));
+    });
+  }
+
+  stop() {
+    this.pad.disconnect();
+    this.osc.kill();
+  }
+
+  onKey(k) {
     // console.log(k);
     const x = k.x;
 
@@ -17,9 +43,9 @@ pad.connect().then(() => {
       for (let i = 0; i < 8; i++) {
         offButtons.push([x, i]);
       }
-      pad.col(pad.off, offButtons);
+      this.pad.col(this.pad.off, offButtons);
 
-      cc[x] = 0;
+      this.cc[x] = 0;
     }
     if (k.x < 8 && k.y < 8) {
       const y = (8 - k.y);
@@ -28,25 +54,27 @@ pad.connect().then(() => {
       for (let i = k.y; i < 8; i++) {
         onButtons.push([x, i]);
       }
-      pad.col(k.pressed ? pad.red : pad.green, onButtons);
+      this.pad.col(k.pressed ? this.pad.red : this.pad.green, onButtons);
 
       const offButtons = [];
       for (let i = 0; i < k.y; i++) {
         offButtons.push([x, i]);
       }
-      pad.col(pad.off, offButtons);
+      this.pad.col(this.pad.off, offButtons);
 
-      cc[x] = y / 8.0;
+      this.cc[x] = y / 8.0;
     }
 
-    console.log(cc);
-    osc.send('/cc', cc);
-  });
-});
+    console.log(this.cc);
+    this.osc.send('/cc', this.cc);
+  }
+}
+
+const p = new Pad(3333);
+p.start();
 
 //do something when app is closing
 process.on('exit', () => {
-  osc.kill();
-  pad.disconnect();
+  p.close();
   process.exit();
 });
