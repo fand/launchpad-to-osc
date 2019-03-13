@@ -1,31 +1,35 @@
-const OSC = require('node-osc');
+import * as OSC from 'node-osc';
+import * as LP from 'launchpad-mini';
 const Launchpad = require('launchpad-mini');
 
 class Pad {
-  constructor(port) {
+  pad: LP.Launchpad;
+  osc: OSC.Client;
+
+  isMixer: boolean = false;
+  isHold: boolean = false;
+
+  cc = [0, 0, 0, 0, 0, 0, 0, 0];
+  note = [
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+  ];
+
+  constructor(port: number) {
     this.pad = new Launchpad();
     this.osc = new OSC.Client('127.0.0.1', port);
-
-    this.cc = [0, 0, 0, 0, 0, 0, 0, 0];
-    this.note = [
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0,
-    ];
-
-    this.isMixer = false;
-    this.isHold = false;
   }
 
   start() {
     this.pad.connect().then(() => {
       this.pad.reset(0);
-      this.pad.on('key', k => this.onKey(k));
+      this.pad.on('key', (k: any) => this.onKey(k));
     });
   }
 
@@ -34,7 +38,7 @@ class Pad {
     this.osc.kill();
   }
 
-  onKey(k) {
+  onKey(k: LP.ButtonLikeArray) {
     console.log(k);
 
     if (k.x === 7 && k.y === 8) {
@@ -44,7 +48,8 @@ class Pad {
         else { this.showPad(); }
       }
 
-      this.pad.col(k.pressed ? this.pad.red : this.isMixer ? this.pad.green : this.pad.off, k);
+      const col: LP.Color = k.pressed ? this.pad.red : this.isMixer ? this.pad.green : this.pad.off;
+      this.pad.col(col, k);
     }
 
     if (this.isMixer) {
@@ -55,9 +60,9 @@ class Pad {
     }
   }
 
-  onKeyMixer(k) {
+  onKeyMixer(k: LP.ButtonLikeArray) {
     if (k.y === 8) {
-      const offButtons = [];
+      const offButtons: number[][] = [];
       for (let i = 0; i < 8; i++) {
         offButtons.push([k.x, i]);
       }
@@ -83,11 +88,10 @@ class Pad {
       this.cc[k.x] = y / 8.0;
     }
 
-    // console.log(this.cc);
     this.osc.send('/cc', this.cc);
   }
 
-  onKeyPad(k) {
+  onKeyPad(k: LP.ButtonLikeArray) {
     if (k.x === 8) {
       this.isHold = k.pressed;
     }
@@ -121,7 +125,7 @@ class Pad {
   }
 
   showMixer() {
-    const onButtons = [];
+    const onButtons: LP.ButtonXY[] = [];
 
     this.cc.forEach((c, x) => {
       const height = c * 8.;
@@ -135,8 +139,8 @@ class Pad {
   }
 
   showPad() {
-    const onButtons = [];
-    const holdButtons = [];
+    const onButtons: LP.ButtonXY[] = [];
+    const holdButtons: LP.ButtonXY[] = [];
     this.pad.reset(0);
 
     this.note.forEach((n, i) => {
@@ -157,4 +161,4 @@ class Pad {
   }
 }
 
-module.exports = Pad;
+export default Pad;
