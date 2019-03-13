@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const meow = require('meow');
-const Pad = require('.');
+const Pad = require('..');
 
 const cli = meow(`
 	Usage
