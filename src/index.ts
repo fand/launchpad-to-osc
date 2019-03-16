@@ -249,17 +249,18 @@ class Pad {
     let isBlinking = false;
 
     this.loopTimer = setInterval(() => {
-      const now = Date.now();
-      if (now - this.loopStart > this.loopLength) {
-        console.log('>>>>>>>>>>>>>> loopStart');
-        this.loopStart = now;
-        this.frameIndex = 0;
-        this.pad.col(this.pad.red, [8, 7]);
-        isBlinking = true;
-      }
-      if (isBlinking) {
-        this.pad.col(this.pad.off, [8, 7]);
-        isBlinking = false;
+      if (!this.isTapping) {
+        const now = Date.now();
+        if (now - this.loopStart > this.loopLength) {
+          this.loopStart = now;
+          this.frameIndex = 0;
+          this.pad.col(this.pad.red, [8, 7]);
+          isBlinking = true;
+        }
+        else if (isBlinking) {
+          this.pad.col(this.pad.off, [8, 7]);
+          isBlinking = false;
+        }
       }
 
       const record = this.records[this.frameIndex];
@@ -267,8 +268,8 @@ class Pad {
         const onButtons: LP.ButtonXY[] = [];
         const offButtons: LP.ButtonXY[] = [];
 
-        record.forEach((e, i) => {
-          this.note[i] = e.pressed ? 0.75 : 0;
+        record.forEach(e => {
+          this.note[e.note] = e.pressed ? 0.75 : 0;
           if (e.pressed) {
             onButtons.push([e.x, e.y]);
           }
