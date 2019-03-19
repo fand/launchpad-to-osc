@@ -283,6 +283,11 @@ class Pad {
                 this.pad.col(this.pad.amber, offButtons);
             }
 
+            // Send beat
+            const ll = this.loopLength / 1000;
+            const beat = (this.frameIndex * 30 / 1000) / ll;
+            this.osc.send('/beat', [beat, ll]);
+
             this.frameIndex++
         }, 30); // almost 30fps
     }
