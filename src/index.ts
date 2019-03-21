@@ -247,6 +247,9 @@ class Pad {
     }
 
     startLoop() {
+        this.isLooping = true;
+        this.pad.col(this.pad.green, [8, 6]);
+
         this.loopStart = Date.now();
         this.frameIndex = 0;
         let isBlinking = false;
@@ -324,6 +327,8 @@ class Pad {
     }
 
     stopLoop() {
+        this.isLooping = false;
+        this.pad.col(this.pad.off, [8, 6]);
         if (this.loopTimer) {
             clearInterval(this.loopTimer);
             this.pad.col(this.pad.off, [8, 7]);
