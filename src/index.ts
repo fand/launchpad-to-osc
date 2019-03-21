@@ -130,6 +130,10 @@ class Pad {
                 // Erase button is a momentary button
                 this.isErasing = k.pressed;
             }
+            if (k.y === 3) {
+                // Erase button is a momentary button
+                this.reset();
+            }
             if (k.y === 6 && k.pressed) {
                 // Loop button is a toggle button
                 if (!this.isLooping) {
@@ -245,24 +249,56 @@ class Pad {
     startLoop() {
         this.loopStart = Date.now();
         this.frameIndex = 0;
-
         let isBlinking = false;
 
         this.loopTimer = setInterval(() => {
+            // Wrap timers
+            const now = Date.now();
+            if (now - this.loopStart > this.loopLength) {
+                this.loopStart += this.loopLength;
+                this.frameIndex = 0;
+            }
+
+            // Send beat
+            const beat = (now - this.loopStart) / this.loopLength;
+            this.osc.send('/beat', [beat, this.loopLength / 1000]);
+
+
+            // Blink tap button
             if (!this.isTapping) {
-                const now = Date.now();
-                if (now - this.loopStart > this.loopLength) {
-                    this.loopStart = now;
-                    this.frameIndex = 0;
-                    this.pad.col(this.pad.red, [8, 7]);
-                    isBlinking = true;
+                if (0 <= beat && beat < 0.1) {
+                    if (!isBlinking) {
+                        this.pad.col(this.pad.red, [8, 7]);
+                        isBlinking = true;
+                    }
                 }
-                else if (isBlinking) {
-                    this.pad.col(this.pad.off, [8, 7]);
-                    isBlinking = false;
+                else if (0.25 <= beat && beat < 0.35) {
+                    if (!isBlinking) {
+                        this.pad.col(this.pad.yellow, [8, 7]);
+                        isBlinking = true;
+                    }
+                }
+                else if (0.5 <= beat && beat < 0.6) {
+                    if (!isBlinking) {
+                        this.pad.col(this.pad.yellow, [8, 7]);
+                        isBlinking = true;
+                    }
+                }
+                else if (0.75 <= beat && beat < 0.85) {
+                    if (!isBlinking) {
+                        this.pad.col(this.pad.yellow, [8, 7]);
+                        isBlinking = true;
+                    }
+                }
+                else {
+                    if (isBlinking) {
+                        this.pad.col(this.pad.off, [8, 7]);
+                        isBlinking = false;
+                    }
                 }
             }
 
+            // Send note
             const record = this.records[this.frameIndex];
             if (record) {
                 const onButtons: LP.ButtonXY[] = [];
@@ -283,11 +319,6 @@ class Pad {
                 this.pad.col(this.pad.amber, offButtons);
             }
 
-            // Send beat
-            const ll = this.loopLength / 1000;
-            const beat = (this.frameIndex * 30 / 1000) / ll;
-            this.osc.send('/beat', [beat, ll]);
-
             this.frameIndex++
         }, 30); // almost 30fps
     }
@@ -297,6 +328,23 @@ class Pad {
             clearInterval(this.loopTimer);
             this.pad.col(this.pad.off, [8, 7]);
         }
+    }
+
+    reset() {
+        this.records = [];
+        this.cc = [0, 0, 0, 0, 0, 0, 0, 0];
+        this.note = [
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+
+        this.pad.reset(0);
     }
 }
 
