@@ -24,9 +24,14 @@ const cli = meow(`
 const port = cli.flags.port || 3333;
 
 const p = new Pad(port);
-p.start();
-
-process.on('exit', () => {
-  p.close();
-  process.exit();
-});
+p.start()
+	.then(() => {
+		process.on('exit', () => {
+		  p.close();
+		  process.exit();
+		});
+	})
+	.catch((e) => {
+		console.error(e);
+		process.exit(-1);
+	});

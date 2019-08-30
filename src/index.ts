@@ -45,14 +45,13 @@ class Pad {
         this.osc = new OSC.Client('127.0.0.1', port);
     }
 
-    start() {
-        this.pad.connect().then(() => {
-            this.pad.reset(0);
-            this.pad.on('key', (k: any) => this.onKey(k));
-        });
+    async start(): Promise<void> {
+        await this.pad.connect();
+        this.pad.reset(0);
+        this.pad.on('key', (k: any) => this.onKey(k));
     }
 
-    stop() {
+    stop(): void {
         this.pad.disconnect();
         this.osc.kill();
     }

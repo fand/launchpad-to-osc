@@ -8,11 +8,13 @@
   "dependencies": {
     "launchpad-mini": "^2.1.2",
     "meow": "^5.0.0",
-    "node-osc": "^2.1.0"
+    "node-osc": "^2.1.0",
+    "pm2": "^3.5.1"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node bin/cli.js"
+    "start": "pm2 start --no-daemon --restart-delay=1000 --max-restarts 99999 bin/cli.js",
+    "dev": "node bin/cli.js"
   },
   "devDependencies": {
     "@types/node": "^11.11.3",
